@@ -1,50 +1,24 @@
 import { useLogin, useRegister } from '@/hooks/login-hooks';
 import { rsaPsw } from '@/utils';
-import { Button, Form, Input } from 'antd';
-import { Popover } from 'antd-mobile'
+import { Button, Checkbox, Form, Input } from 'antd';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon, useNavigate } from 'umi';
-// import RightPanel from './right-panel';
-import ZhIcon from './menuIcons/zh-icon'
-import EnIcon from './menuIcons/en-icon'
-// import IconZh from '@/assets/svg/icon_zh.svg'
-// import IconEn from '@/assets/svg/icon_En.svg'
+import RightPanel from './right-panel';
+
 import { Domain } from '@/constants/common';
 import styles from './index.less';
-import SvgIcon from '@/components/svg-icon';
-import CustomSwitch from './customSwitch';
-
 
 const Login = () => {
   const [title, setTitle] = useState('login');
-
   const navigate = useNavigate();
-
   const { login, loading: signLoading } = useLogin();
-
   const { register, loading: registerLoading } = useRegister();
-
-  const [languageTitle, setLanguageTitle] = useState<string>('中文')
-
-  const [languageIcon, setLanguageIcon] = useState<any>('icon_zh')
-
-  // 国际化
-  const { t, i18n } = useTranslation('translation', { keyPrefix: 'login' });
-
-  // const [isDarkTheme, setThemeColor] = useState<any>(false)
-
+  const { t } = useTranslation('translation', { keyPrefix: 'login' });
   const loading = signLoading || registerLoading;
 
-  const languageOptions = [
-    // { value: '中文' },
-    // { value: 'English' }
-    { key: 'zh', text: '中文', icon: <ZhIcon />, iconName: 'icon_zh' },
-    { key: 'en', text: 'English', icon: <EnIcon />, iconName: 'icon_En' },
-  ]
-
   const changeTitle = () => {
-    // setTitle((title) => (title === 'login' ? 'register' : 'login'));
+    setTitle((title) => (title === 'login' ? 'register' : 'login'));
   };
   const [form] = Form.useForm();
 
@@ -80,27 +54,6 @@ const Login = () => {
       console.log('Failed:', errorInfo);
     }
   };
-
-  /**
-   * @description 切换主题色
-   * @param value 是否check值
-   */
-  // const handleThemeChange = (value: any) => {
-  //   console.log('value', value)
-  //   setThemeColor(value)
-  //   console.log(document.querySelector('.checkedSwitch'))
-  // }
-
-  /**
-   * @description 切换语言
-   * @param node 语言信息
-   */
-  const changeLanguage = (node: any) => {
-    setLanguageTitle(node.text)
-    setLanguageIcon(node.iconName)
-    i18n.changeLanguage(node.key) // 参值为'en'或'zh'
-  }
-
   const formItemLayout = {
     labelCol: { span: 6 },
     // wrapperCol: { span: 8 },
@@ -113,80 +66,39 @@ const Login = () => {
 
   return (
     <div className={styles.loginPage}>
-      <div className={styles.leftContainer}>
-        <div className={styles.sytemTitle}>
-          <div>
-            {t('systemTitle1')}
-            <SvgIcon name="sparkle" width={12}></SvgIcon>
-            {t('systemTitle2')}
-          </div>
-          <div>{t('introduce')}</div>
-          <div>{t('loginTip')}</div>
-        </div>
-        <div className={styles.bottomTitle}>
-          <span>{t('zhongding')}</span>
-          <span>{t('zhihui')}</span>
-          <span>{t('funeng')}</span>
-        </div>
-      </div>
-      <div className={styles.rightContainer}>
-        <div className={styles.modePanel}>
-          {/* <Switch
-            onChange={handleThemeChange}
-            className={!isDarkTheme ? styles.uncheckedSwitch : styles.checkedSwitch}
-          /> */}
-          <CustomSwitch />
-          <div className={styles.language}>
-            <Popover.Menu
-              actions={languageOptions}
-              placement="bottom-start"
-              trigger="click"
-              className='languagePopover'
-              onAction={(node: any) => changeLanguage(node)}
-            >
-              <div className={styles.languageSelect}>
-                <SvgIcon name={languageIcon} width={24} />
-                <div className={styles.languageTitle}>{languageTitle}</div>
-                <SvgIcon name={'chevron-down'} width={13} color='#ccc' />
-              </div>
-            </Popover.Menu>
-          </div>
-        </div>
-        <div className={styles.loginFormPanel}>
-          <div className={styles.cropLogo}>
-            <SvgIcon name='zd' width={21} />
-            <div>{t('zhongding')}</div>
-          </div>
+      <div className={styles.loginLeft}>
+        <div className={styles.leftContainer}>
           <div className={styles.loginTitle}>
-            <div>{title === 'login' ? t('userlogin') : t('register')}</div>
+            <div>{title === 'login' ? t('login') : t('register')}</div>
             <span>
               {title === 'login'
                 ? t('loginDescription')
                 : t('registerDescription')}
             </span>
           </div>
+
           <Form
             form={form}
             layout="vertical"
             name="dynamic_rule"
             style={{ maxWidth: 600 }}
           >
-            {/* <Form.Item
-            {...formItemLayout}
-            name="email"
-            label={t('emailLabel')}
-            rules={[{ required: true, message: t('emailPlaceholder') }]}
-          >
-            <Input size="large" placeholder={t('emailPlaceholder')} />
-          </Form.Item> */}
-            {title === 'login' && (
+            <Form.Item
+              {...formItemLayout}
+              name="email"
+              label={t('emailLabel')}
+              rules={[{ required: true, message: t('emailPlaceholder') }]}
+            >
+              <Input size="large" placeholder={t('emailPlaceholder')} />
+            </Form.Item>
+            {title === 'register' && (
               <Form.Item
                 {...formItemLayout}
-                name="email"
+                name="nickname"
                 label={t('nicknameLabel')}
                 rules={[{ required: true, message: t('nicknamePlaceholder') }]}
               >
-                <Input size="large" placeholder={t('nicknamePlaceholder')} className={styles.loginInput} />
+                <Input size="large" placeholder={t('nicknamePlaceholder')} />
               </Form.Item>
             )}
             <Form.Item
@@ -199,30 +111,19 @@ const Login = () => {
                 size="large"
                 placeholder={t('passwordPlaceholder')}
                 onPressEnter={onCheck}
-                className={styles.loginInput}
               />
             </Form.Item>
-            {/* {title === 'login' && (
+            {title === 'login' && (
               <Form.Item name="remember" valuePropName="checked">
                 <Checkbox> {t('rememberMe')}</Checkbox>
               </Form.Item>
-            )} */}
-            <Button
-              type="primary"
-              block
-              size="large"
-              onClick={onCheck}
-              loading={loading}
-              className={styles.loginBtn}
-            >
-              {title === 'login' ? t('login') : t('continue')}
-            </Button>
-            <div className={styles.forgetTipPanel}>
+            )}
+            <div>
               {title === 'login' && (
                 <div>
                   {t('signInTip')}
                   <Button type="link" onClick={changeTitle}>
-                    {t('connectAdmin')}
+                    {t('signUp')}
                   </Button>
                 </div>
               )}
@@ -235,6 +136,15 @@ const Login = () => {
                 </div>
               )}
             </div>
+            <Button
+              type="primary"
+              block
+              size="large"
+              onClick={onCheck}
+              loading={loading}
+            >
+              {title === 'login' ? t('login') : t('continue')}
+            </Button>
             {title === 'login' && (
               <>
                 {/* <Button
@@ -271,10 +181,9 @@ const Login = () => {
             )}
           </Form>
         </div>
-        <div className={styles.copyrightPanel}>
-          {t('copyright')}
-        </div>
-        <div className={styles.decorationBg}></div>
+      </div>
+      <div className={styles.loginRight}>
+        <RightPanel></RightPanel>
       </div>
     </div>
   );
