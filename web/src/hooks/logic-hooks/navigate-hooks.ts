@@ -1,17 +1,26 @@
 import { Routes } from '@/routes';
 import { useCallback } from 'react';
-import { useNavigate } from 'umi';
+import { useNavigate, useParams, useSearchParams } from 'umi';
+
+export enum QueryStringMap {
+  KnowledgeId = 'knowledgeId',
+}
 
 export const useNavigatePage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { id } = useParams();
 
   const navigateToDatasetList = useCallback(() => {
     navigate(Routes.Datasets);
   }, [navigate]);
 
-  const navigateToDataset = useCallback(() => {
-    navigate(Routes.Dataset);
-  }, [navigate]);
+  const navigateToDataset = useCallback(
+    (id: string) => () => {
+      navigate(`${Routes.Dataset}/${id}`);
+    },
+    [navigate],
+  );
 
   const navigateToHome = useCallback(() => {
     navigate(Routes.Home);
@@ -29,6 +38,39 @@ export const useNavigatePage = () => {
     navigate(Routes.Chat);
   }, [navigate]);
 
+  const navigateToChunkParsedResult = useCallback(
+    (id: string, knowledgeId?: string) => () => {
+      navigate(
+        `${Routes.ParsedResult}/${id}?${QueryStringMap.KnowledgeId}=${knowledgeId}`,
+      );
+    },
+    [navigate],
+  );
+
+  const getQueryString = useCallback(
+    (queryStringKey?: QueryStringMap) => {
+      const allQueryString = {
+        [QueryStringMap.KnowledgeId]: searchParams.get(
+          QueryStringMap.KnowledgeId,
+        ),
+      };
+      if (queryStringKey) {
+        return allQueryString[queryStringKey];
+      }
+      return allQueryString;
+    },
+    [searchParams],
+  );
+
+  const navigateToChunk = useCallback(
+    (route: Routes) => {
+      navigate(
+        `${route}/${id}?${QueryStringMap.KnowledgeId}=${getQueryString(QueryStringMap.KnowledgeId)}`,
+      );
+    },
+    [getQueryString, id, navigate],
+  );
+
   return {
     navigateToDatasetList,
     navigateToDataset,
@@ -36,5 +78,8 @@ export const useNavigatePage = () => {
     navigateToProfile,
     navigateToChatList,
     navigateToChat,
+    navigateToChunkParsedResult,
+    getQueryString,
+    navigateToChunk,
   };
 };
