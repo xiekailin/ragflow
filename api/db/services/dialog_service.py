@@ -29,7 +29,7 @@ from api.db.db_models import Dialog, DB
 from api.db.services.common_service import CommonService
 from api.db.services.document_service import DocumentService
 from api.db.services.knowledgebase_service import KnowledgebaseService
-from api.db.services.llm_service import LLMService, TenantLLMService, LLMBundle
+from api.db.services.llm_service import TenantLLMService, LLMBundle
 from api import settings
 from graphrag.utils import get_tags_from_cache, set_tags_to_cache
 from rag.app.resume import forbidden_select_fields4resume
@@ -172,21 +172,12 @@ def chat(dialog, messages, stream=True, **kwargs):
 
     chat_start_ts = timer()
 
-    # Get llm model name and model provider name
-    llm_id, model_provider = TenantLLMService.split_model_name_and_factory(dialog.llm_id)
-
-    # Get llm model instance by model and provide name
-    llm = LLMService.query(llm_name=llm_id) if not model_provider else LLMService.query(llm_name=llm_id, fid=model_provider)
-
-    if not llm:
-        # Model name is provided by tenant, but not system built-in
-        llm = TenantLLMService.query(tenant_id=dialog.tenant_id, llm_name=llm_id) if not model_provider else \
-            TenantLLMService.query(tenant_id=dialog.tenant_id, llm_name=llm_id, llm_factory=model_provider)
-        if not llm:
-            raise LookupError("LLM(%s) not found" % dialog.llm_id)
-        max_tokens = 8192
+    if llm_id2llm_type(dialog.llm_id) == "image2text":
+        llm_model_config = TenantLLMService.get_model_config(dialog.tenant_id, LLMType.IMAGE2TEXT, dialog.llm_id)
     else:
-        max_tokens = llm[0].max_tokens
+        llm_model_config = TenantLLMService.get_model_config(dialog.tenant_id, LLMType.CHAT, dialog.llm_id)
+
+    max_tokens = llm_model_config.get("max_tokens", 8192)
 
     check_llm_ts = timer()
 
@@ -567,7 +558,7 @@ Requirements:
     kwd = chat_mdl.chat(prompt, msg[1:], {"temperature": 0.2})
     if isinstance(kwd, tuple):
         kwd = kwd[0]
-    kwd = re.sub(r"<think>.*</think>", "", kwd)
+    kwd = re.sub(r"<think>.*</think>", "", kwd, flags=re.DOTALL)
     if kwd.find("**ERROR**") >= 0:
         return ""
     return kwd
@@ -597,7 +588,7 @@ Requirements:
     kwd = chat_mdl.chat(prompt, msg[1:], {"temperature": 0.2})
     if isinstance(kwd, tuple):
         kwd = kwd[0]
-    kwd = re.sub(r"<think>.*</think>", "", kwd)
+    kwd = re.sub(r"<think>.*</think>", "", kwd, flags=re.DOTALL)
     if kwd.find("**ERROR**") >= 0:
         return ""
     return kwd
@@ -668,7 +659,7 @@ Output: What's the weather in Rochester on {tomorrow}?
 ###############
     """
     ans = chat_mdl.chat(prompt, [{"role": "user", "content": "Output: "}], {"temperature": 0.2})
-    ans = re.sub(r"<think>.*</think>", "", ans)
+    ans = re.sub(r"<think>.*</think>", "", ans, flags=re.DOTALL)
     return ans if ans.find("**ERROR**") < 0 else messages[-1]["content"]
 
 
@@ -793,7 +784,7 @@ Output:
     kwd = chat_mdl.chat(prompt, msg[1:], {"temperature": 0.5})
     if isinstance(kwd, tuple):
         kwd = kwd[0]
-    kwd = re.sub(r"<think>.*</think>", "", kwd)
+    kwd = re.sub(r"<think>.*</think>", "", kwd, flags=re.DOTALL)
     if kwd.find("**ERROR**") >= 0:
         raise Exception(kwd)
 
